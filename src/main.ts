@@ -19,7 +19,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   const serviceInfo = {
-    name: 'team',
+    name: 'test',
     host: `https://${os.hostname()}-3000.csb.app`,
     port: 3000,
   };
