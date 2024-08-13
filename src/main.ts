@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import axios from 'axios';
+import * as https from 'https';
 import * as os from 'os';
 
 async function bootstrap() {
@@ -24,13 +24,44 @@ async function bootstrap() {
     port: 3000,
   };
   console.log(`https://${os.hostname()}-3000.csb.app`);
+
   try {
     // ディスカバリサービスに登録
-    await axios.post(
-      'https://rvx396-3001.csb.app/discovery/register',
-      serviceInfo,
-    );
-    console.log('Service registered successfully');
+    const data = JSON.stringify(serviceInfo);
+
+    const options = {
+      hostname: 'rvx396-3001.csb.app',
+      port: 443,
+      path: '/discovery/register',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let responseBody = '';
+
+      res.on('data', (chunk) => {
+        responseBody += chunk;
+      });
+
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          console.log('Service registered successfully');
+        } else {
+          console.error(`Failed to register service: ${res.statusCode} ${res.statusMessage}`);
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      console.error('Error registering service:', error);
+    });
+
+    req.write(data);
+    req.end();
   } catch (error) {
     console.error('Error registering service:', error);
   }
